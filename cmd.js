@@ -7,7 +7,7 @@ cmd.register = function (name, callback)
     callbacks[name] = callback;
 }
 
-cmd.execute = function (command, args)
+cmd.exec = cmd.execute = function (command, args)
 {
     if (!args)
     {
