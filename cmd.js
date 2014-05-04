@@ -53,10 +53,10 @@ cmd.exec = cmd.execute = function (command, args)
 
     if (callbacks[command])
     {
-        callbacks[command](args);
+        return callbacks[command](args);
     }
     else
     {
-        console.error('Command not found: ' + command);
+        return 'Command not found: ' + command;
     }
 }
