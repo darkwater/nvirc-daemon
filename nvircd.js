@@ -14,25 +14,23 @@ cmd.register('print', function (args)
     console.log(args);
 });
 
-// {{{ /nick, /user, /real
-cmd.register('nick', function (args)
+cmd.register('set', function (args)
 {
-    if (args.length > 0) settings.nickname = args[0];
-    else                 console.log(settings.nick);
-});
+    if (!settings[args[0]])
+    {
+        console.error('Setting not found: ' + args[0]);
+        return;
+    }
 
-cmd.register('user', function (args)
-{
-    if (args.length > 0) settings.username = args[0];
-    else                 console.log(settings.username);
+    if (args[1])
+    {
+        settings[args[0]] = args.slice(1).join(' ');
+    }
+    else
+    {
+        console.log(settings[args[0]]);
+    }
 });
-
-cmd.register('real', function (args)
-{
-    if (args.length > 0) settings.realname = args.join(' ');
-    else                 console.log(settings.realname);
-});
-// }}}
 
 cmd.register('connect', function (args)
 {
@@ -59,7 +57,7 @@ cmd.register('join', function (args)
     });
 });
 
-cmd.exec('nick dark-');
-cmd.exec('real Darkwater using nvirc');
-cmd.exec('connect irc.freenode.net');
-setInterval(function () { cmd.exec('join 0 #nvirc') }, 5000);
+cmd.exec('/set nickname dark-');
+cmd.exec('/set realname Darkwater using nvirc');
+cmd.exec('/set realname');
+// cmd.exec('/connect irc.freenode.net');
