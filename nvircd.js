@@ -1,7 +1,8 @@
 var irc      = require('irc'),
     tls      = require('tls'),
     fs       = require('fs'),
-    cmd      = require('./cmd.js');
+    cmd      = require('./cmd.js'),
+    bcrypt   = require('bcrypt-nodejs');
 
 var settings = {
     nickname: process.env.USER,
@@ -57,7 +58,7 @@ cmd.register('connect', function (args) // {{{
 
     servers.push(conn);
 
-    return true;
+    return servers.length - 1;
 }); // }}}
 
 cmd.register('join', function (args) // {{{
@@ -84,33 +85,58 @@ cmd.register('say', function (args) // {{{
 
 var ssl = {
     key: fs.readFileSync('sslkey.pem'),
-    cert: fs.readFileSync('sslcert.pem')
+    cert: fs.readFileSync('sslcert.pem'),
+    password: fs.readFileSync('password.bcr')
 };
 
 var interfaces = {};
 
-interfaces.cli = tls.createServer({
+interfaces.cli = tls.createServer({ // {{{
     key:  ssl.key,
     cert: ssl.cert
 }, function (conn)
 {
+    var remoteAddress = conn.remoteAddress + ':' + conn.remotePort;
+    console.log('Connection from ' + remoteAddress);
+
+    var authorized = false;
+
     conn.on('data', function (data)
     {
         data.toString().split('\n').forEach(function (line)
         {
             if (line.length < 1) return;
+            if (line == 'end') conn.end();
 
-            try
+            else try
             {
+                if (!authorized)
+                {
+                    authorized = bcrypt.compareSync(line, ssl.password.toString().slice(0, -1));
+
+                    console.log(conn.remoteAddress + ':' + conn.remotePort
+                        + (authorized ? ' logged in' : ' attempted to log in'))
+
+                    conn.write((authorized ? '' : 'not ') + 'authorized\n');
+
+                    return;
+                }
+
                 var result = cmd.exec(line);
                 conn.write(result.toString() + '\n');
             }
             catch (e)
             {
                 conn.write('error\n');
+                console.error(e);
             }
         });
     });
+
+    conn.on('end', function ()
+    {
+        console.log(remoteAddress + ' disconnected');
+    });
 });
 
-interfaces.cli.listen(3331);
+interfaces.cli.listen(3331); // }}}
