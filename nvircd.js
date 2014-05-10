@@ -83,6 +83,17 @@ cmd.register('say', function (args) // {{{
 // }}}
 
 
+if (process.stdin) process.stdin.on('data', function (data) // {{{
+{
+    data.toString().split('\n').forEach(function (line)
+    {
+        if (line.length < 1 ) return;
+
+        console.log(cmd.exec(line));
+    });
+}); // }}}
+
+
 var ssl = {
     key: fs.readFileSync('sslkey.pem'),
     cert: fs.readFileSync('sslcert.pem'),
